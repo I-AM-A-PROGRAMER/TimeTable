@@ -1,9 +1,10 @@
-const CACHE_NAME = "kiit-schedule-v1";
+const CACHE_NAME = "kiit-schedule-v2";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./manifest.json",
   "./favicon.png",
   "./icon-192.png",
   "./icon-512.png",
@@ -36,16 +37,20 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// Fetch Event - network-first for API, stale-while-revalidate for static assets
+// Fetch Event
 self.addEventListener("fetch", (e) => {
+  // Only handle GET requests and http/https protocols (prevents crashing on chrome-extensions etc.)
+  if (e.request.method !== "GET" || !e.request.url.startsWith("http")) {
+    return;
+  }
+
   const url = new URL(e.request.url);
 
-  // 1. Handle API requests with Network-First strategy, falling back to cache
+  // 1. Handle API requests with Network-First strategy
   if (url.pathname.includes("/api/")) {
     e.respondWith(
       fetch(e.request)
         .then((response) => {
-          // If valid response, clone and cache it
           if (response.status === 200) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
@@ -55,27 +60,30 @@ self.addEventListener("fetch", (e) => {
           return response;
         })
         .catch(() => {
-          console.log("[Service Worker] Fetch failed, serving API from cache fallback:", url.pathname);
+          console.log("[Service Worker] API network fetch failed, serving from cache:", url.pathname);
           return caches.match(e.request);
         })
     );
   } else {
-    // 2. Handle static assets & external Google fonts with Stale-While-Revalidate/Cache-First strategy
+    // 2. Handle static assets & Google Fonts with Stale-While-Revalidate / Cache-First strategy
     e.respondWith(
       caches.match(e.request).then((cachedResponse) => {
         if (cachedResponse) {
-          // Fetch from network in the background to update the cache
-          fetch(e.request)
-            .then((networkResponse) => {
-              if (networkResponse.status === 200) {
-                caches.open(CACHE_NAME).then((cache) => {
-                  cache.put(e.request, networkResponse);
-                });
-              }
-            })
-            .catch(() => {
-              // Ignore network failures for background updates
-            });
+          // Fetch from network in the background to update the cache.
+          // We use e.request.url (string) instead of e.request to avoid "Cannot fetch navigate request" errors in Chrome/Safari.
+          e.waitUntil(
+            fetch(e.request.url)
+              .then((networkResponse) => {
+                if (networkResponse.status === 200) {
+                  caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(e.request.url, networkResponse);
+                  });
+                }
+              })
+              .catch(() => {
+                // Ignore network errors during background updates
+              })
+          );
           return cachedResponse;
         }
 
@@ -94,6 +102,9 @@ self.addEventListener("fetch", (e) => {
             });
           }
           return networkResponse;
+        }).catch((err) => {
+          console.error("[Service Worker] Fetch failed for:", e.request.url, err);
+          throw err;
         });
       })
     );
