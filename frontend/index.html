@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KIIT Timetable</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="phone">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-top">
+        <h1 class="app-name">KIIT<span>·</span>Schedule</h1>
+        <div class="clock" id="clock">--:--</div>
+      </div>
+
+      <!-- Section selector -->
+      <div class="selector-row">
+        <div class="select-wrap">
+          <select id="dept-select" aria-label="Department"></select>
+        </div>
+        <div class="select-wrap">
+          <select id="section-select" aria-label="Section" disabled></select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Day strip: current week with real dates, today auto-selected -->
+    <nav class="day-strip" id="day-strip" aria-label="Select day"></nav>
+
+    <!-- Live status banner -->
+    <div class="status" id="status" hidden></div>
+
+    <!-- Schedule -->
+    <main class="schedule">
+      <div class="schedule-head">
+        <h2 id="day-title">—</h2>
+        <span class="date-pill" id="date-pill"></span>
+      </div>
+      <div id="schedule-list" class="schedule-list">
+        <div class="empty">
+          <div class="empty-emoji">📅</div>
+          <p>Pick your department and section to see your timetable.</p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <span id="course-count"></span>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

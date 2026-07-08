@@ -1,0 +1,16 @@
+# Render backend service config.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: kiit-tt-api
+    runtime: python
+    plan: free
+    # The repo root contains app.py, build_db.py, the Excel, and requirements.txt.
+    buildCommand: pip install -r requirements.txt
+    # Build the SQLite DB from the committed Excel, then run the API with gunicorn.
+    startCommand: python build_db.py && gunicorn app:app --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.7
+    healthCheckPath: /api/health
+    autoDeploy: true
