@@ -155,29 +155,27 @@ if (!isStandalone) {
     }
   });
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const installBanner = document.getElementById("install-banner");
-    const btnInstallNow = document.getElementById("btn-install-now");
-    const btnInstallDismiss = document.getElementById("btn-install-dismiss");
+  const installBanner = document.getElementById("install-banner");
+  const btnInstallNow = document.getElementById("btn-install-now");
+  const btnInstallDismiss = document.getElementById("btn-install-dismiss");
 
-    if (installBanner && btnInstallNow && btnInstallDismiss) {
-      btnInstallNow.addEventListener("click", async () => {
-        if (!deferredPrompt) return;
-        
-        installBanner.hidden = true;
-        deferredPrompt.prompt();
-        
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`PWA installation outcome: ${outcome}`);
-        deferredPrompt = null;
-      });
+  if (installBanner && btnInstallNow && btnInstallDismiss) {
+    btnInstallNow.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      
+      installBanner.hidden = true;
+      deferredPrompt.prompt();
+      
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA installation outcome: ${outcome}`);
+      deferredPrompt = null;
+    });
 
-      btnInstallDismiss.addEventListener("click", () => {
-        installBanner.hidden = true;
-        sessionStorage.setItem("kiit_pwa_dismissed", "true");
-      });
-    }
-  });
+    btnInstallDismiss.addEventListener("click", () => {
+      installBanner.hidden = true;
+      sessionStorage.setItem("kiit_pwa_dismissed", "true");
+    });
+  }
 }
 
 // ----------------------------------------------------------------- //

@@ -343,6 +343,10 @@ body {
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.install-banner[hidden] {
+  display: none !important;
+}
+
 @keyframes slideUp {
   from { transform: translate(-50%, 40px); opacity: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
