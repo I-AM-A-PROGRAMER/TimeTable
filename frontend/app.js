@@ -117,9 +117,22 @@ async function init() {
     try {
       const reg = await navigator.serviceWorker.register("./sw.js");
       console.log("Service Worker registered successfully:", reg.scope);
+
+      // Check for updates on load
+      reg.update();
     } catch (e) {
       console.warn("Service Worker registration failed:", e);
     }
+
+    // Auto reload when service worker updates and takes control
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!refreshing) {
+        refreshing = true;
+        console.log("Service Worker updated, reloading...");
+        window.location.reload();
+      }
+    });
   }
 }
 
