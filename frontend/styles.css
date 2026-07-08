@@ -291,7 +291,17 @@ body {
 .empty-emoji { font-size: 38px; margin-bottom: 12px; }
 .empty p { font-size: 14px; line-height: 1.5; }
 
-.foot { margin-top: 24px; text-align: center; color: var(--muted-2); font-size: 11px; }
+.foot {
+  margin-top: 24px;
+  text-align: center;
+  color: var(--muted-2);
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.foot .copyright { color: var(--muted); font-weight: 500; }
 
 /* Desktop: subtle frame feel */
 @media (min-width: 700px) {
