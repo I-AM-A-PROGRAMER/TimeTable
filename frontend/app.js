@@ -112,66 +112,72 @@ async function init() {
   setInterval(tickClock, 1000 * 20);
   setInterval(() => { if (state.timetable) renderSchedule(); }, 1000 * 60);
 
-  // Register Service Worker
-  if ("serviceWorker" in navigator) {
+}
+
+// ----------------------------------------------------------------- //
+// PWA & Service Worker Logic (Decoupled from API initialization)
+// ----------------------------------------------------------------- //
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
     try {
       const reg = await navigator.serviceWorker.register("./sw.js");
       console.log("Service Worker registered successfully:", reg.scope);
-
-      // Check for updates on load
       reg.update();
     } catch (e) {
       console.warn("Service Worker registration failed:", e);
     }
+  });
 
-    // Auto reload when service worker updates and takes control
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (!refreshing) {
-        refreshing = true;
-        console.log("Service Worker updated, reloading...");
-        window.location.reload();
-      }
-    });
-  }
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!refreshing) {
+      refreshing = true;
+      console.log("Service Worker updated, reloading...");
+      window.location.reload();
+    }
+  });
+}
 
-  // PWA Custom Install Prompt Banner
-  let deferredPrompt;
-  const installBanner = document.getElementById("install-banner");
-  const btnInstallNow = document.getElementById("btn-install-now");
-  const btnInstallDismiss = document.getElementById("btn-install-dismiss");
+// PWA Custom Install Prompt Banner
+let deferredPrompt;
+const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
 
-  // Check if already running in standalone PWA window
-  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+if (!isStandalone) {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    // Prevent standard browser bar from displaying
+    e.preventDefault();
+    deferredPrompt = e;
 
-  if (!isStandalone && installBanner) {
-    window.addEventListener("beforeinstallprompt", (e) => {
-      // Prevent standard browser bar from displaying
-      e.preventDefault();
-      deferredPrompt = e;
+    const installBanner = document.getElementById("install-banner");
+    // Only show banner if not dismissed in the current browser session
+    if (installBanner && !sessionStorage.getItem("kiit_pwa_dismissed")) {
+      installBanner.hidden = false;
+    }
+  });
 
-      // Only show banner if not dismissed in the current browser session
-      if (!sessionStorage.getItem("kiit_pwa_dismissed")) {
-        installBanner.hidden = false;
-      }
-    });
+  document.addEventListener("DOMContentLoaded", () => {
+    const installBanner = document.getElementById("install-banner");
+    const btnInstallNow = document.getElementById("btn-install-now");
+    const btnInstallDismiss = document.getElementById("btn-install-dismiss");
 
-    btnInstallNow.addEventListener("click", async () => {
-      if (!deferredPrompt) return;
-      
-      installBanner.hidden = true;
-      deferredPrompt.prompt();
-      
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`PWA installation outcome: ${outcome}`);
-      deferredPrompt = null;
-    });
+    if (installBanner && btnInstallNow && btnInstallDismiss) {
+      btnInstallNow.addEventListener("click", async () => {
+        if (!deferredPrompt) return;
+        
+        installBanner.hidden = true;
+        deferredPrompt.prompt();
+        
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`PWA installation outcome: ${outcome}`);
+        deferredPrompt = null;
+      });
 
-    btnInstallDismiss.addEventListener("click", () => {
-      installBanner.hidden = true;
-      sessionStorage.setItem("kiit_pwa_dismissed", "true");
-    });
-  }
+      btnInstallDismiss.addEventListener("click", () => {
+        installBanner.hidden = true;
+        sessionStorage.setItem("kiit_pwa_dismissed", "true");
+      });
+    }
+  });
 }
 
 // ----------------------------------------------------------------- //
