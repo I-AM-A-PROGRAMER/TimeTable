@@ -318,3 +318,108 @@ body {
 
 /* Hide scrollbar for any horizontal overflow */
 ::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ------------------------------------------------------------------ */
+/* PWA Install Banner */
+/* ------------------------------------------------------------------ */
+.install-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 420px;
+  background: rgba(20, 22, 31, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+  from { transform: translate(-50%, 40px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.install-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.install-icon {
+  font-size: 28px;
+  background: var(--primary-glow);
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+}
+
+.install-text {
+  flex: 1;
+}
+
+.install-text h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.install-text p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.install-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.install-actions button {
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  border: none;
+}
+
+.btn-dismiss {
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid var(--border) !important;
+}
+
+.btn-dismiss:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.btn-install {
+  background: var(--primary);
+  color: var(--bg);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.btn-install:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+

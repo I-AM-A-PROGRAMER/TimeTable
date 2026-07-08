@@ -134,6 +134,44 @@ async function init() {
       }
     });
   }
+
+  // PWA Custom Install Prompt Banner
+  let deferredPrompt;
+  const installBanner = document.getElementById("install-banner");
+  const btnInstallNow = document.getElementById("btn-install-now");
+  const btnInstallDismiss = document.getElementById("btn-install-dismiss");
+
+  // Check if already running in standalone PWA window
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+
+  if (!isStandalone && installBanner) {
+    window.addEventListener("beforeinstallprompt", (e) => {
+      // Prevent standard browser bar from displaying
+      e.preventDefault();
+      deferredPrompt = e;
+
+      // Only show banner if not dismissed in the current browser session
+      if (!sessionStorage.getItem("kiit_pwa_dismissed")) {
+        installBanner.hidden = false;
+      }
+    });
+
+    btnInstallNow.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      
+      installBanner.hidden = true;
+      deferredPrompt.prompt();
+      
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA installation outcome: ${outcome}`);
+      deferredPrompt = null;
+    });
+
+    btnInstallDismiss.addEventListener("click", () => {
+      installBanner.hidden = true;
+      sessionStorage.setItem("kiit_pwa_dismissed", "true");
+    });
+  }
 }
 
 // ----------------------------------------------------------------- //
