@@ -5,8 +5,7 @@
 //  - Local dev (served by Flask at the same origin)  -> ""        (relative)
 //  - On Vercel (frontend only)                       -> your Render URL
 //    override by setting window.KIIT_API in index.html, or just hardcode below.
-const API_BASE =
-  (typeof window !== "undefined" && window.KIIT_API) || ""; // e.g. "https://kiit-tt-api.onrender.com"
+const API_BASE = "https://timetable-8sed.onrender.com";
 
 const api = (path) => `${API_BASE}${path}`;
 
