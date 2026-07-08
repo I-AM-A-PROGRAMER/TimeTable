@@ -1,0 +1,29 @@
+{
+  "name": "KIIT Schedule",
+  "short_name": "KIIT Schedule",
+  "description": "Daily college timetable for KIIT students, with real-time class tracking and offline support.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0b14",
+  "theme_color": "#0a0b14",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

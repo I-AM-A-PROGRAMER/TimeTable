@@ -111,6 +111,16 @@ async function init() {
   tickClock();
   setInterval(tickClock, 1000 * 20);
   setInterval(() => { if (state.timetable) renderSchedule(); }, 1000 * 60);
+
+  // Register Service Worker
+  if ("serviceWorker" in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.register("./sw.js");
+      console.log("Service Worker registered successfully:", reg.scope);
+    } catch (e) {
+      console.warn("Service Worker registration failed:", e);
+    }
+  }
 }
 
 // ----------------------------------------------------------------- //
@@ -146,9 +156,15 @@ async function loadSections() {
   try {
     const res = await fetch(api("/api/sections"));
     state.grouped = await res.json();
+    localStorage.setItem("kiit_sections_cache", JSON.stringify(state.grouped));
   } catch (e) {
-    el.list.innerHTML = `<div class="empty"><div class="empty-emoji">⚠️</div><p>Could not reach the API. Is the backend running?</p></div>`;
-    return;
+    const cached = localStorage.getItem("kiit_sections_cache");
+    if (cached) {
+      state.grouped = JSON.parse(cached);
+    } else {
+      el.list.innerHTML = `<div class="empty"><div class="empty-emoji">⚠️</div><p>Could not reach the API. Is the backend running?</p></div>`;
+      return;
+    }
   }
 
   el.dept.innerHTML = "";
@@ -248,9 +264,16 @@ async function loadTimetable(section) {
     const res = await fetch(api(`/api/timetable?section=${encodeURIComponent(section)}`));
     if (!res.ok) throw new Error("not found");
     state.timetable = await res.json();
+    localStorage.setItem(`kiit_timetable_cache_${section}`, JSON.stringify(state.timetable));
     renderSchedule();
   } catch (e) {
-    el.list.innerHTML = `<div class="empty"><div class="empty-emoji">⚠️</div><p>Could not load timetable for this section.</p></div>`;
+    const cached = localStorage.getItem(`kiit_timetable_cache_${section}`);
+    if (cached) {
+      state.timetable = JSON.parse(cached);
+      renderSchedule();
+    } else {
+      el.list.innerHTML = `<div class="empty"><div class="empty-emoji">⚠️</div><p>Could not load timetable for this section.</p></div>`;
+    }
   }
 }
 
