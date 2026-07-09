@@ -15,6 +15,10 @@ const DAY_SHORT = ["MON", "TUE", "WED", "THU", "FRI"];
 const el = {
   dept: document.getElementById("dept-select"),
   section: document.getElementById("section-select"),
+  pe1: document.getElementById("pe1-select"),
+  pe1Section: document.getElementById("pe1-section-select"),
+  pe2: document.getElementById("pe2-select"),
+  pe2Section: document.getElementById("pe2-section-select"),
   strip: document.getElementById("day-strip"),
   dayTitle: document.getElementById("day-title"),
   datePill: document.getElementById("date-pill"),
@@ -96,22 +100,78 @@ async function init() {
 
   await loadSections();
 
-  const saved = localStorage.getItem("kiit_section");
-  if (saved && selectSection(saved)) {
-    await loadTimetable(saved);
+  const savedCoreSec = localStorage.getItem("kiit_section");
+  const savedPE1Dept = localStorage.getItem("kiit_pe1_dept");
+  const savedPE1Sec = localStorage.getItem("kiit_pe1_section");
+  const savedPE2Dept = localStorage.getItem("kiit_pe2_dept");
+  const savedPE2Sec = localStorage.getItem("kiit_pe2_section");
+
+  if (savedCoreSec && selectSection(savedCoreSec)) {
+    if (savedPE1Dept) {
+      el.pe1.value = savedPE1Dept;
+      populatePESections(1);
+      if (savedPE1Sec && [...el.pe1Section.options].some(o => o.value === savedPE1Sec)) {
+        el.pe1Section.value = savedPE1Sec;
+      }
+    }
+    if (savedPE2Dept) {
+      el.pe2.value = savedPE2Dept;
+      populatePESections(2);
+      if (savedPE2Sec && [...el.pe2Section.options].some(o => o.value === savedPE2Sec)) {
+        el.pe2Section.value = savedPE2Sec;
+      }
+    }
+    await loadCombinedTimetable();
   }
 
   el.section.addEventListener("change", () => {
     const code = el.section.value;
     if (code) localStorage.setItem("kiit_section", code);
-    loadTimetable(code);
+    else localStorage.removeItem("kiit_section");
+    loadCombinedTimetable();
   });
-  el.dept.addEventListener("change", populateSections);
+  el.dept.addEventListener("change", () => {
+    populateSections();
+    loadCombinedTimetable();
+  });
+
+  el.pe1.addEventListener("change", () => {
+    const dept = el.pe1.value;
+    if (dept) localStorage.setItem("kiit_pe1_dept", dept);
+    else {
+      localStorage.removeItem("kiit_pe1_dept");
+      localStorage.removeItem("kiit_pe1_section");
+    }
+    populatePESections(1);
+    loadCombinedTimetable();
+  });
+  el.pe1Section.addEventListener("change", () => {
+    const code = el.pe1Section.value;
+    if (code) localStorage.setItem("kiit_pe1_section", code);
+    else localStorage.removeItem("kiit_pe1_section");
+    loadCombinedTimetable();
+  });
+
+  el.pe2.addEventListener("change", () => {
+    const dept = el.pe2.value;
+    if (dept) localStorage.setItem("kiit_pe2_dept", dept);
+    else {
+      localStorage.removeItem("kiit_pe2_dept");
+      localStorage.removeItem("kiit_pe2_section");
+    }
+    populatePESections(2);
+    loadCombinedTimetable();
+  });
+  el.pe2Section.addEventListener("change", () => {
+    const code = el.pe2Section.value;
+    if (code) localStorage.setItem("kiit_pe2_section", code);
+    else localStorage.removeItem("kiit_pe2_section");
+    loadCombinedTimetable();
+  });
 
   tickClock();
   setInterval(tickClock, 1000 * 20);
   setInterval(() => { if (state.timetable) renderSchedule(); }, 1000 * 60);
-
 }
 
 // ----------------------------------------------------------------- //
@@ -222,19 +282,57 @@ async function loadSections() {
     }
   }
 
+  // 1. Populate Core Department Select
   el.dept.innerHTML = "";
-  const ph = document.createElement("option");
-  ph.value = ""; ph.textContent = "Department";
-  el.dept.appendChild(ph);
+  const phDept = document.createElement("option");
+  phDept.value = ""; phDept.textContent = "Department";
+  el.dept.appendChild(phDept);
 
-  const depts = Object.keys(state.grouped).sort(sortDepts);
-  depts.forEach((d) => {
-    const opt = document.createElement("option");
-    opt.value = d;
-    opt.textContent = deptLabel(d);
-    el.dept.appendChild(opt);
+  const coreDepts = ["CS-S5", "IT-S5", "CSSE-S5", "CSCE-S5"];
+  coreDepts.forEach((d) => {
+    if (state.grouped[d]) {
+      const opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = deptLabel(d);
+      el.dept.appendChild(opt);
+    }
   });
+
+  // 2. Populate PE1 Select
+  el.pe1.innerHTML = "";
+  const phPE1 = document.createElement("option");
+  phPE1.value = ""; phPE1.textContent = "Professional Elective 1";
+  el.pe1.appendChild(phPE1);
+
+  const pe1Depts = ["AI-S5-PE1", "IPA-S5-PE1", "HPC-S5-PE1", "DOS-S5-PE1"];
+  pe1Depts.forEach((d) => {
+    if (state.grouped[d]) {
+      const opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = getPELabel(d);
+      el.pe1.appendChild(opt);
+    }
+  });
+
+  // 3. Populate PE2 Select
+  el.pe2.innerHTML = "";
+  const phPE2 = document.createElement("option");
+  phPE2.value = ""; phPE2.textContent = "Professional Elective 2";
+  el.pe2.appendChild(phPE2);
+
+  const pe2Depts = ["CI-S5-PE2", "CD-S5-PE2", "BDS-S5-PE2", "BD-S5-PE2", "SVP-S5-PE2", "PSIOT-S5-PE2", "DMDW-S5-PE2"];
+  pe2Depts.forEach((d) => {
+    if (state.grouped[d]) {
+      const opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = getPELabel(d);
+      el.pe2.appendChild(opt);
+    }
+  });
+
   populateSections();
+  populatePESections(1);
+  populatePESections(2);
 }
 
 function sortDepts(a, b) {
@@ -268,13 +366,17 @@ function deptLabel(d) {
   return map[d] || d;
 }
 
+function getPELabel(d) {
+  return d.split("-")[0];
+}
+
 function populateSections() {
   const dept = el.dept.value;
   el.section.innerHTML = "";
   if (!dept) {
     el.section.disabled = true;
     const o = document.createElement("option");
-    o.textContent = "Section";
+    o.value = ""; o.textContent = "Section";
     el.section.appendChild(o);
     return;
   }
@@ -290,9 +392,37 @@ function populateSections() {
   });
 }
 
+function populatePESections(num) {
+  const peSelect = num === 1 ? el.pe1 : el.pe2;
+  const peSecSelect = num === 1 ? el.pe1Section : el.pe2Section;
+  const dept = peSelect.value;
+
+  peSecSelect.innerHTML = "";
+  if (!dept) {
+    peSecSelect.disabled = true;
+    const o = document.createElement("option");
+    o.value = ""; o.textContent = "Section";
+    peSecSelect.appendChild(o);
+    return;
+  }
+
+  peSecSelect.disabled = false;
+  const secs = state.grouped[dept] || [];
+  const o = document.createElement("option");
+  o.value = ""; o.textContent = `Section (${secs.length})`;
+  peSecSelect.appendChild(o);
+
+  secs.forEach((s) => {
+    const opt = document.createElement("option");
+    opt.value = s.code; opt.textContent = s.code;
+    peSecSelect.appendChild(opt);
+  });
+}
+
 function selectSection(code) {
-  for (const d of Object.keys(state.grouped)) {
-    if (state.grouped[d].some((s) => s.code === code)) {
+  const coreDepts = ["CS-S5", "IT-S5", "CSSE-S5", "CSCE-S5"];
+  for (const d of coreDepts) {
+    if (state.grouped[d] && state.grouped[d].some((s) => s.code === code)) {
       el.dept.value = d;
       populateSections();
       el.section.value = code;
@@ -305,8 +435,12 @@ function selectSection(code) {
 // ----------------------------------------------------------------- //
 // Timetable
 // ----------------------------------------------------------------- //
-async function loadTimetable(section) {
-  if (!section) {
+async function loadCombinedTimetable() {
+  const coreSec = el.section.value;
+  const pe1Sec = el.pe1Section.value;
+  const pe2Sec = el.pe2Section.value;
+
+  if (!coreSec) {
     state.timetable = null;
     el.list.innerHTML = `<div class="empty"><div class="empty-emoji">📅</div><p>Pick your department and section to see your timetable.</p></div>`;
     el.status.hidden = true;
@@ -315,20 +449,60 @@ async function loadTimetable(section) {
     el.courseCount.textContent = "";
     return;
   }
-  try {
-    const res = await fetch(api(`/api/timetable?section=${encodeURIComponent(section)}`));
-    if (!res.ok) throw new Error("not found");
-    state.timetable = await res.json();
-    localStorage.setItem(`kiit_timetable_cache_${section}`, JSON.stringify(state.timetable));
-    renderSchedule();
-  } catch (e) {
-    const cached = localStorage.getItem(`kiit_timetable_cache_${section}`);
-    if (cached) {
-      state.timetable = JSON.parse(cached);
-      renderSchedule();
-    } else {
-      el.list.innerHTML = `<div class="empty"><div class="empty-emoji">⚠️</div><p>Could not load timetable for this section.</p></div>`;
+
+  const fetchSection = async (sec) => {
+    if (!sec) return null;
+    try {
+      const res = await fetch(api(`/api/timetable?section=${encodeURIComponent(sec)}`));
+      if (!res.ok) throw new Error("not found");
+      const data = await res.json();
+      localStorage.setItem(`kiit_timetable_cache_${sec}`, JSON.stringify(data));
+      return data;
+    } catch (e) {
+      const cached = localStorage.getItem(`kiit_timetable_cache_${sec}`);
+      if (cached) return JSON.parse(cached);
+      return null;
     }
+  };
+
+  try {
+    const [coreData, pe1Data, pe2Data] = await Promise.all([
+      fetchSection(coreSec),
+      fetchSection(pe1Sec),
+      fetchSection(pe2Sec),
+    ]);
+
+    if (!coreData) {
+      el.list.innerHTML = `<div class="empty"><div class="empty-emoji">⚠️</div><p>Could not load timetable for the main section.</p></div>`;
+      return;
+    }
+
+    const combined = {
+      section: coreData.section,
+      department: coreData.department,
+      semester: coreData.semester,
+      days: {},
+    };
+
+    DAY_FULL.forEach((day) => {
+      const classes = [];
+      if (coreData.days && coreData.days[day]) {
+        classes.push(...coreData.days[day]);
+      }
+      if (pe1Data && pe1Data.days && pe1Data.days[day]) {
+        classes.push(...pe1Data.days[day]);
+      }
+      if (pe2Data && pe2Data.days && pe2Data.days[day]) {
+        classes.push(...pe2Data.days[day]);
+      }
+      classes.sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
+      combined.days[day] = classes;
+    });
+
+    state.timetable = combined;
+    renderSchedule();
+  } catch (err) {
+    el.list.innerHTML = `<div class="empty"><div class="empty-emoji">⚠️</div><p>An error occurred loading the timetables.</p></div>`;
   }
 }
 

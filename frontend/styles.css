@@ -84,6 +84,11 @@ body {
 }
 
 /* Selectors */
+.selector-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .selector-row {
   display: flex;
   gap: 10px;
