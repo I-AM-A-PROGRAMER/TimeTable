@@ -381,7 +381,8 @@ function populateSections() {
     return;
   }
   el.section.disabled = false;
-  const secs = state.grouped[dept] || [];
+  const secs = [...(state.grouped[dept] || [])];
+  secs.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
   const o = document.createElement("option");
   o.value = ""; o.textContent = `Section (${secs.length})`;
   el.section.appendChild(o);
@@ -407,7 +408,8 @@ function populatePESections(num) {
   }
 
   peSecSelect.disabled = false;
-  const secs = state.grouped[dept] || [];
+  const secs = [...(state.grouped[dept] || [])];
+  secs.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
   const o = document.createElement("option");
   o.value = ""; o.textContent = `Section (${secs.length})`;
   peSecSelect.appendChild(o);
