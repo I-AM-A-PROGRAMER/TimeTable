@@ -26,6 +26,17 @@ const el = {
   status: document.getElementById("status"),
   clock: document.getElementById("clock"),
   courseCount: document.getElementById("course-count"),
+  
+  // Weekly View & Selector elements
+  btnDaily: document.getElementById("btn-view-daily"),
+  btnWeekly: document.getElementById("btn-view-weekly"),
+  btnDownload: document.getElementById("btn-download"),
+  dailyView: document.getElementById("daily-view"),
+  weeklyView: document.getElementById("weekly-view"),
+  weeklyCaptureArea: document.getElementById("weekly-capture-area"),
+  weeklyGridBody: document.getElementById("weekly-grid-body"),
+  weeklyGridHead: document.getElementById("weekly-grid-head"),
+  weeklySectionsTitle: document.getElementById("weekly-sections-title"),
 };
 
 let state = {
@@ -33,6 +44,7 @@ let state = {
   timetable: null,
   weekDates: [],
   selectedDay: null,
+  currentView: "daily",
 };
 
 // ----------------------------------------------------------------- //
@@ -105,6 +117,7 @@ async function init() {
   const savedPE1Sec = localStorage.getItem("kiit_pe1_section");
   const savedPE2Dept = localStorage.getItem("kiit_pe2_dept");
   const savedPE2Sec = localStorage.getItem("kiit_pe2_section");
+  const savedView = localStorage.getItem("kiit_view") || "daily";
 
   if (savedCoreSec && selectSection(savedCoreSec)) {
     if (savedPE1Dept) {
@@ -123,6 +136,14 @@ async function init() {
     }
     await loadCombinedTimetable();
   }
+
+  // Set initial view state
+  switchView(savedView);
+
+  // Event Listeners for view switching
+  el.btnDaily.addEventListener("click", () => switchView("daily"));
+  el.btnWeekly.addEventListener("click", () => switchView("weekly"));
+  el.btnDownload.addEventListener("click", downloadWeeklyImage);
 
   el.section.addEventListener("change", () => {
     const code = el.section.value;
@@ -171,7 +192,7 @@ async function init() {
 
   tickClock();
   setInterval(tickClock, 1000 * 20);
-  setInterval(() => { if (state.timetable) renderSchedule(); }, 1000 * 60);
+  setInterval(() => { if (state.timetable) { if (state.currentView === "daily") renderSchedule(); else renderWeeklySchedule(); } }, 1000 * 60);
 }
 
 // ----------------------------------------------------------------- //
@@ -444,11 +465,16 @@ async function loadCombinedTimetable() {
 
   if (!coreSec) {
     state.timetable = null;
-    el.list.innerHTML = `<div class="empty"><div class="empty-emoji">📅</div><p>Pick your department and section to see your timetable.</p></div>`;
+    const emptyHtml = `<div class="empty"><div class="empty-emoji">📅</div><p>Pick your department and section to see your timetable.</p></div>`;
+    el.list.innerHTML = emptyHtml;
+    el.weeklyGridHead.innerHTML = `<tr><th>Day</th></tr>`;
+    el.weeklyGridBody.innerHTML = `<tr><td colspan="11">${emptyHtml}</td></tr>`;
     el.status.hidden = true;
+    el.status.style.display = "none";
     el.dayTitle.textContent = "—";
     el.datePill.textContent = "";
     el.courseCount.textContent = "";
+    el.weeklySectionsTitle.textContent = "—";
     return;
   }
 
@@ -475,7 +501,10 @@ async function loadCombinedTimetable() {
     ]);
 
     if (!coreData) {
-      el.list.innerHTML = `<div class="empty"><div class="empty-emoji">⚠️</div><p>Could not load timetable for the main section.</p></div>`;
+      const errorHtml = `<div class="empty"><div class="empty-emoji">⚠️</div><p>Could not load timetable for the main section.</p></div>`;
+      el.list.innerHTML = errorHtml;
+      el.weeklyGridHead.innerHTML = `<tr><th>Day</th></tr>`;
+      el.weeklyGridBody.innerHTML = `<tr><td colspan="11">${errorHtml}</td></tr>`;
       return;
     }
 
@@ -489,22 +518,29 @@ async function loadCombinedTimetable() {
     DAY_FULL.forEach((day) => {
       const classes = [];
       if (coreData.days && coreData.days[day]) {
-        classes.push(...coreData.days[day]);
+        classes.push(...coreData.days[day].map(c => ({ ...c, type: "core" })));
       }
       if (pe1Data && pe1Data.days && pe1Data.days[day]) {
-        classes.push(...pe1Data.days[day]);
+        classes.push(...pe1Data.days[day].map(c => ({ ...c, type: "pe1" })));
       }
       if (pe2Data && pe2Data.days && pe2Data.days[day]) {
-        classes.push(...pe2Data.days[day]);
+        classes.push(...pe2Data.days[day].map(c => ({ ...c, type: "pe2" })));
       }
       classes.sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
       combined.days[day] = classes;
     });
 
     state.timetable = combined;
-    renderSchedule();
+    if (state.currentView === "daily") {
+      renderSchedule();
+    } else {
+      renderWeeklySchedule();
+    }
   } catch (err) {
-    el.list.innerHTML = `<div class="empty"><div class="empty-emoji">⚠️</div><p>An error occurred loading the timetables.</p></div>`;
+    const errorHtml = `<div class="empty"><div class="empty-emoji">⚠️</div><p>An error occurred loading the timetables.</p></div>`;
+    el.list.innerHTML = errorHtml;
+    el.weeklyGridHead.innerHTML = `<tr><th>Day</th></tr>`;
+    el.weeklyGridBody.innerHTML = `<tr><td colspan="11">${errorHtml}</td></tr>`;
   }
 }
 
@@ -559,8 +595,13 @@ function renderSchedule() {
 }
 
 function renderStatus(classes, ongoingIdx, isToday) {
-  if (!isToday) { el.status.hidden = true; return; }
+  if (!isToday || state.currentView !== "daily") {
+    el.status.hidden = true;
+    el.status.style.display = "none";
+    return;
+  }
   el.status.hidden = false;
+  el.status.style.display = "flex";
 
   if (ongoingIdx >= 0) {
     const c = classes[ongoingIdx];
@@ -604,6 +645,204 @@ function tickClock() {
   el.clock.textContent = new Date().toLocaleTimeString([], {
     hour: "2-digit", minute: "2-digit",
   });
+}
+
+// ----------------------------------------------------------------- //
+// Weekly View & Switch View Logic
+// ----------------------------------------------------------------- //
+function switchView(view) {
+  state.currentView = view;
+  localStorage.setItem("kiit_view", view);
+
+  if (view === "weekly") {
+    el.btnDaily.classList.remove("active");
+    el.btnWeekly.classList.add("active");
+
+    el.strip.style.display = "none";
+    el.status.style.display = "none";
+    el.dailyView.style.display = "none";
+    el.weeklyView.style.display = "flex";
+
+    renderWeeklySchedule();
+  } else {
+    el.btnDaily.classList.add("active");
+    el.btnWeekly.classList.remove("active");
+
+    el.strip.style.display = "grid";
+    el.status.style.display = el.status.hidden ? "none" : "flex";
+    el.dailyView.style.display = "block";
+    el.weeklyView.style.display = "none";
+
+    if (state.timetable) renderSchedule();
+  }
+}
+
+function renderWeeklySchedule() {
+  const container = el.weeklyGridBody;
+  container.innerHTML = "";
+
+  if (!state.timetable) {
+    el.weeklyGridHead.innerHTML = `<tr><th>Day</th></tr>`;
+    container.innerHTML = `<tr><td colspan="11"><div class="empty"><div class="empty-emoji">📅</div><p>Pick your department and section to see your timetable.</p></div></td></tr>`;
+    el.weeklySectionsTitle.textContent = "—";
+    return;
+  }
+
+  // Calculate the maximum period dynamically based on scheduled classes across all days
+  let maxPeriod = 5; // Default minimum columns: P5 (up to 1:00 PM)
+  DAY_FULL.forEach((day) => {
+    const classes = state.timetable.days[day] || [];
+    classes.forEach((c) => {
+      const num = parseInt(c.period.replace("P", ""), 10);
+      if (num > maxPeriod) {
+        maxPeriod = num;
+      }
+    });
+  });
+
+  // Build the unified title (e.g. CS1 · HPC1 · CI1)
+  const coreSec = el.section.value;
+  const pe1Sec = el.pe1Section.value;
+  const pe2Sec = el.pe2Section.value;
+  
+  let titleParts = [coreSec];
+  if (pe1Sec) titleParts.push(pe1Sec);
+  if (pe2Sec) titleParts.push(pe2Sec);
+  el.weeklySectionsTitle.textContent = titleParts.join(" · ");
+
+  const PERIOD_TIMES = {
+    "P1": "08:00",
+    "P2": "09:00",
+    "P3": "10:00",
+    "P4": "11:00",
+    "P5": "12:00",
+    "P6": "13:00",
+    "P7": "14:00",
+    "P8": "15:00",
+    "P9": "16:00",
+    "P10": "17:00"
+  };
+
+  // Build dynamic time headers (no P1..Pn, just time)
+  let headHtml = `<tr><th>Day</th>`;
+  for (let i = 1; i <= maxPeriod; i++) {
+    const timeStr = PERIOD_TIMES[`P${i}`] || "";
+    headHtml += `<th>${timeStr}</th>`;
+  }
+  headHtml += `</tr>`;
+  el.weeklyGridHead.innerHTML = headHtml;
+
+  const DAY_SHORT_MAP = {
+    "Monday": "Mon",
+    "Tuesday": "Tue",
+    "Wednesday": "Wed",
+    "Thursday": "Thu",
+    "Friday": "Fri"
+  };
+
+  DAY_FULL.forEach((day) => {
+    const classes = state.timetable.days[day] || [];
+
+    // Group classes by period name (P1 to P10)
+    const periodMap = {};
+    for (let i = 1; i <= maxPeriod; i++) {
+      periodMap[`P${i}`] = [];
+    }
+    classes.forEach((c) => {
+      if (periodMap[c.period]) {
+        periodMap[c.period].push(c);
+      }
+    });
+
+    const row = document.createElement("tr");
+
+    // 1. Day cell
+    const dayCell = document.createElement("td");
+    dayCell.className = "day-cell";
+    dayCell.textContent = DAY_SHORT_MAP[day] || day;
+    row.appendChild(dayCell);
+
+    // 2. Period cells (P1 to maxPeriod)
+    for (let i = 1; i <= maxPeriod; i++) {
+      const pKey = `P${i}`;
+      const cellClasses = periodMap[pKey] || [];
+      const cell = document.createElement("td");
+      cell.className = "class-cell";
+
+      if (cellClasses.length > 0) {
+        const stack = document.createElement("div");
+        stack.className = "weekly-cell-stack";
+
+        cellClasses.forEach((c) => {
+          const card = document.createElement("div");
+          card.className = `weekly-cell-card ${c.type || "core"}`;
+          card.innerHTML = `
+            <div class="subj">${escapeHtml(c.subject)}</div>
+            <div class="room">${escapeHtml(c.room || "—")}</div>
+          `;
+          stack.appendChild(card);
+        });
+
+        cell.appendChild(stack);
+      }
+      row.appendChild(cell);
+    }
+
+    container.appendChild(row);
+  });
+}
+
+async function downloadWeeklyImage() {
+  const area = el.weeklyCaptureArea;
+  const coreSec = el.section.value;
+  const pe1Sec = el.pe1Section.value;
+  const pe2Sec = el.pe2Section.value;
+
+  if (!coreSec) {
+    alert("Please select a core section first.");
+    return;
+  }
+
+  let filename = `timetable_${coreSec}`;
+  if (pe1Sec) filename += `_${pe1Sec}`;
+  if (pe2Sec) filename += `_${pe2Sec}`;
+  filename += ".png";
+
+  try {
+    const canvas = await html2canvas(area, {
+      backgroundColor: "#09090b", // Onyx Black
+      scale: 2, // high quality
+      logging: false,
+      useCORS: true,
+      onclone: (clonedDoc) => {
+        const clonedArea = clonedDoc.getElementById("weekly-capture-area");
+        if (clonedArea) {
+          // Force layout expansion to ensure full table grid renders without truncation
+          clonedArea.style.width = "950px";
+          clonedArea.style.maxWidth = "none";
+          
+          const wrapper = clonedArea.querySelector(".weekly-grid-wrapper");
+          if (wrapper) {
+            wrapper.style.overflowX = "visible";
+            wrapper.style.width = "100%";
+          }
+          const table = clonedArea.querySelector(".weekly-grid-table");
+          if (table) {
+            table.style.width = "100%";
+            table.style.minWidth = "850px";
+          }
+        }
+      }
+    });
+
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  } catch (err) {
+    console.error("Failed to download image", err);
+    alert("Could not generate image. Please try again.");
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);

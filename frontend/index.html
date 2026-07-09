@@ -17,6 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
   <div class="phone">
@@ -59,6 +60,12 @@
       </div>
     </header>
 
+    <!-- View Selector (Daily vs Weekly) -->
+    <div class="view-selector">
+      <button id="btn-view-daily" class="view-tab active">Daily</button>
+      <button id="btn-view-weekly" class="view-tab">Weekly</button>
+    </div>
+
     <!-- Day strip: current week with real dates, today auto-selected -->
     <nav class="day-strip" id="day-strip" aria-label="Select day"></nav>
 
@@ -66,7 +73,7 @@
     <div class="status" id="status" hidden></div>
 
     <!-- Schedule -->
-    <main class="schedule">
+    <main class="schedule" id="daily-view">
       <div class="schedule-head">
         <h2 id="day-title">—</h2>
         <span class="date-pill" id="date-pill"></span>
@@ -79,10 +86,45 @@
       </div>
     </main>
 
+    <!-- Weekly View Content -->
+    <div id="weekly-view" class="weekly-view" hidden>
+      <div class="weekly-actions">
+        <button id="btn-download" class="btn-download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="download-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Image
+        </button>
+      </div>
+      <div id="weekly-capture-area" class="weekly-capture-area">
+        <div class="weekly-capture-header">
+          <div class="weekly-title">KIIT<span>·</span>Weekly Schedule</div>
+          <div id="weekly-sections-title" class="weekly-sections-title">—</div>
+        </div>
+        <div class="weekly-grid-wrapper">
+          <table class="weekly-grid-table">
+            <thead id="weekly-grid-head">
+              <!-- Rendered dynamically -->
+            </thead>
+            <tbody id="weekly-grid-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <footer class="foot">
       <span id="course-count"></span>
       <span class="copyright">© 2026 SUPRIYO PRAMANIK</span>
     </footer>
+
+    <div class="social-links">
+      <a href="https://github.com/I-AM-A-PROGRAMER" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+        <svg viewBox="0 0 24 24" fill="currentColor" class="social-icon"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.11.82-.26.82-.577v-2.234c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22v3.293c0 .319.22.694.825.576C20.565 21.795 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      </a>
+      <a href="https://www.linkedin.com/in/supriyopramanik" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+        <svg viewBox="0 0 24 24" fill="currentColor" class="social-icon"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+      </a>
+    </div>
 
     <!-- PWA Install Banner -->
     <div id="install-banner" class="install-banner" hidden>

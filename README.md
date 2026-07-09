@@ -1,32 +1,57 @@
 # KIIT Timetable Web App
 
-A web app to view the **daily college timetable** — shows class time, subject, teacher, and room number. Highlights **today's** schedule and the **ongoing class** based on the viewer's local clock.
+A sleek, mobile-first web app to view your **KIIT University timetable** — supports daily and weekly views, professional elective merging, color-coded class cards, and one-tap image downloads.
 
-Built with **Flask + SQLite**. Data is parsed directly from the Excel sheet.
+Built with **Flask + SQLite** on the backend and vanilla **HTML / CSS / JS** on the frontend. Data is parsed directly from the official Excel sheet.
 
 ---
 
-## What it does
+## Features
 
-- Pick your **department** → **section** from dropdowns (CS, IT, CSSE, CSCE, plus all electives: DOS, HPC, IPA, CD, CI, DMDW, SVP, etc.)
-- Pick a **day** (defaults to today)
-- See each class as a card: **time · subject · teacher · room**
-- A live banner shows the **class happening right now** (or the next one up)
-- Mobile-friendly responsive design
-- Remembers your section on next visit (saved in the browser)
+### Core
+- Pick your **Department → Section** from dropdowns (CS, IT, CSSE, CSCE, etc.)
+- Pick **Professional Elective 1** (AI, IPA, HPC, DOS) and **Professional Elective 2** (CI, CD, BDS, BD, SVP, PSIOT, DMDW) with their own section selectors
+- All three schedules are **merged** into a single unified timetable
+
+### Daily View
+- Swipe through **Mon – Fri** via a date strip
+- Each class shown as a card: **time · subject · teacher · room**
+- A live banner highlights the **ongoing class** (or the next one up)
+- Defaults to **today** on load
+
+### Weekly View
+- Toggle between **Daily** and **Weekly** with a segmented pill control
+- Grid table layout: days on the Y-axis, time slots on the X-axis
+- **Color-coded cards** — Core (green), PE1 (blue), PE2 (amber)
+- **Dynamic column trimming** — only shows time slots up to the latest scheduled class across the entire week
+- Headers show **start times only** (08:00, 09:00, …) — no period labels
+- **Download Image** — exports the full weekly grid as a high-resolution PNG via `html2canvas`
+
+### Design & UX
+- **Onyx Black** dark theme with emerald green and amber gold accents
+- Premium glassmorphism cards, smooth transitions, and micro-animations
+- **Fully responsive** — works on phones, tablets, and desktop
+- **PWA** — installable as a home screen app with offline caching via Service Worker
+- **Remembers your selection** across visits (saved in `localStorage`)
 
 ---
 
 ## Files
 
 ```
-build_db.py                              # parses the Excel -> timetable.db
-app.py                                   # Flask server (API + serves the page)
-templates/index.html                     # page markup
-static/styles.css                        # styling
-static/app.js                            # UI logic + ongoing-class highlight
-5th_Semester_timetable_..._.xlsx         # your timetable (input)
-timetable.db                             # generated database (auto-created)
+build_db.py                                # parses the Excel → timetable.db
+app.py                                     # Flask server (API + serves frontend)
+frontend/
+  index.html                               # page markup
+  styles.css                               # Onyx Black theme + all styling
+  app.js                                   # UI logic, view switching, download
+  sw.js                                    # Service Worker for offline/PWA
+  manifest.json                            # PWA manifest
+  favicon.png / icon-192.png / icon-512.png
+5th_Semester_timetable_..._.xlsx           # timetable source (input)
+timetable.db                               # generated database (auto-created)
+render.yaml                                # Render deployment config
+vercel.json                                # Vercel deployment config
 ```
 
 ---
@@ -63,26 +88,7 @@ If the file has a different name, pass it explicitly:
 python build_db.py "path/to/new_timetable.xlsx"
 ```
 
----
-
-## Period times
-
-| Period | Time |
-|--------|------|
-| P1 | 08:00 – 09:00 |
-| P2 | 09:00 – 10:00 |
-| P3 | 10:00 – 11:00 |
-| P4 | 11:00 – 12:00 |
-| P5 | 12:00 – 13:00 |
-| P6 | 13:00 – 14:00 |
-| P7 | 14:00 – 15:00 |
-| P8 | 15:00 – 16:00 |
-| P9 | 16:00 – 17:00 |
-| P10| 17:00 – 18:00 |
-
----
-
-## API (for tinkerers)
+## API
 
 - `GET /api/sections` — all sections grouped by department
 - `GET /api/timetable?section=CS1` — full week for a section
@@ -93,4 +99,5 @@ python build_db.py "path/to/new_timetable.xlsx"
 
 - The "ongoing class" highlight is based on the **viewer's device clock** (local time), and only shows when viewing *today*.
 - Free periods (blank cells in the Excel) are simply not shown.
-- Sections are grouped under their original department codes (e.g. `DOS-S5-PE1` = DOS Program Elective).
+- Sections are grouped under their original department codes (e.g. `DOS-S5-PE1` = DOS Professional Elective 1).
+- The weekly grid dynamically trims trailing empty time slots — if no class runs past 1 PM across the entire week, columns stop at 12:00.
