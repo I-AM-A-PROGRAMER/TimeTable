@@ -35,6 +35,49 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
+/* Update Notice Banner */
+/* ------------------------------------------------------------------ */
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(245, 158, 11, 0.1));
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  animation: fadeIn 0.4s ease;
+}
+.update-banner[hidden] {
+  display: none !important;
+}
+.update-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.3px;
+}
+.update-dismiss {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+  flex-shrink: 0;
+}
+.update-dismiss:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------------ */
 /* Phone-frame container — centers & caps width on PC, full on mobile */
 /* ------------------------------------------------------------------ */
 .phone {
@@ -126,7 +169,7 @@ body {
 /* ------------------------------------------------------------------ */
 .day-strip {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 7px;
   margin-top: 20px;
 }
@@ -134,20 +177,20 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 10px 4px;
+  padding: 10px 2px;
   text-align: center;
   cursor: pointer;
   transition: all 0.18s ease;
   user-select: none;
 }
 .day-chip .d-num {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
 .day-chip .d-name {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;

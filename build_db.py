@@ -31,7 +31,7 @@ PERIODS = [
     ("P10", "17:00", "18:00"),
 ]
 
-DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def find_excel(arg):
@@ -94,12 +94,15 @@ def seed_periods(conn):
 
 
 def split_section_banner(value):
-    """Banner cell looks like: 'Sem 5 | CS-S5 | CS1'. Split into parts."""
+    """Banner cell looks like: 'Sem 5 | CS-S5 | CS1'. Split into parts.
+
+    Only accepts banners for Semester 5; returns None for other semesters.
+    """
     if not value:
         return None
     parts = [p.strip() for p in str(value).split("|")]
     # Expect at least 3 parts: semester, department, code
-    if len(parts) >= 3:
+    if len(parts) >= 3 and re.search(r"Sem\s*5", parts[0]):
         return parts[0], parts[1], parts[2]
     return None
 

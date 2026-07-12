@@ -14,7 +14,7 @@ Built with **Flask + SQLite** on the backend and vanilla **HTML / CSS / JS** on 
 - All three schedules are **merged** into a single unified timetable
 
 ### Daily View
-- Swipe through **Mon – Fri** via a date strip
+- Swipe through **Mon – Sun** via a date strip
 - Each class shown as a card: **time · subject · teacher · room**
 - A live banner highlights the **ongoing class** (or the next one up)
 - Defaults to **today** on load

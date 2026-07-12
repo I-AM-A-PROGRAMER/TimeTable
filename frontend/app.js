@@ -5,12 +5,12 @@
 //  - Local dev (served by Flask at the same origin)  -> ""        (relative)
 //  - On Vercel (frontend only)                       -> your Render URL
 //    override by setting window.KIIT_API in index.html, or just hardcode below.
-const API_BASE = "https://timetable-8sed.onrender.com";
+const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? "" : "https://timetable-8sed.onrender.com";
 
 const api = (path) => `${API_BASE}${path}`;
 
-const DAY_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-const DAY_SHORT = ["MON", "TUE", "WED", "THU", "FRI"];
+const DAY_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAY_SHORT = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 const el = {
   dept: document.getElementById("dept-select"),
@@ -58,7 +58,7 @@ function getWeekDates() {
   monday.setDate(today.getDate() + mondayOffset);
 
   const arr = [];
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
     const isToday = sameDay(d, today);
@@ -81,7 +81,8 @@ function sameDay(a, b) {
 
 function todayName() {
   const js = new Date().getDay();
-  return js >= 1 && js <= 5 ? DAY_FULL[js - 1] : null;
+  if (js === 0) return "Sunday";
+  return DAY_FULL[js - 1];
 }
 
 function nowMinutes() {
@@ -737,7 +738,9 @@ function renderWeeklySchedule() {
     "Tuesday": "Tue",
     "Wednesday": "Wed",
     "Thursday": "Thu",
-    "Friday": "Fri"
+    "Friday": "Fri",
+    "Saturday": "Sat",
+    "Sunday": "Sun"
   };
 
   DAY_FULL.forEach((day) => {
@@ -844,5 +847,20 @@ async function downloadWeeklyImage() {
     alert("Could not generate image. Please try again.");
   }
 }
+
+// Update notice banner — dismiss with button or sessionStorage
+(function () {
+  const banner = document.getElementById("update-banner");
+  const btn = document.getElementById("btn-update-dismiss");
+  if (banner && btn) {
+    if (sessionStorage.getItem("kiit_update_dismissed")) {
+      banner.hidden = true;
+    }
+    btn.addEventListener("click", () => {
+      banner.hidden = true;
+      sessionStorage.setItem("kiit_update_dismissed", "true");
+    });
+  }
+})();
 
 document.addEventListener("DOMContentLoaded", init);

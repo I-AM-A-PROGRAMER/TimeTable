@@ -1,4 +1,4 @@
-const CACHE_NAME = "kiit-schedule-v2";
+const CACHE_NAME = "kiit-schedule-v3";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
