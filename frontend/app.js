@@ -107,7 +107,23 @@ function escapeHtml(s) {
 // ----------------------------------------------------------------- //
 // Init
 // ----------------------------------------------------------------- //
+// Cache-bust stale timetable data after a timetable update.
+// Bump this version whenever the Excel/db is updated so old
+// localStorage caches are purged on next load.
+const TT_CACHE_VERSION = "v2";
+function purgeStaleTimetableCache() {
+  const key = "kiit_tt_cache_version";
+  if (localStorage.getItem(key) !== TT_CACHE_VERSION) {
+    // Remove all cached section timetables + sections list
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("kiit_timetable_cache_") || k === "kiit_sections_cache")
+      .forEach((k) => localStorage.removeItem(k));
+    localStorage.setItem(key, TT_CACHE_VERSION);
+  }
+}
+
 async function init() {
+  purgeStaleTimetableCache();
   state.weekDates = getWeekDates();
   buildDayStrip();
 
